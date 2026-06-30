@@ -1,80 +1,26 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Цветик</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f5f5; padding-bottom: 20px; }
-    h1 { font-size: 20px; text-align: center; padding: 16px 0 8px; }
-    h2 { font-size: 18px; padding: 12px 16px 8px; }
-
-    /* Карусель */
-    .carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 10px; padding: 0 16px 16px; -webkit-overflow-scrolling: touch; }
-    .carousel::-webkit-scrollbar { display: none; }
-    .carousel-card { flex: 0 0 200px; scroll-snap-align: start; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
-    .carousel-card img { width: 100%; height: 140px; object-fit: cover; }
-    .carousel-card .info { padding: 10px 12px; }
-    .carousel-card .info h4 { font-size: 14px; margin-bottom: 4px; }
-    .carousel-card .info p { font-size: 16px; font-weight: 600; color: #4CAF50; }
-
-    /* Статичный каталог */
-    .catalog { display: flex; flex-direction: column; gap: 12px; padding: 0 16px; }
-    .product { background: #fff; border-radius: 16px; padding: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); display: flex; gap: 12px; align-items: center; }
-    .product img { width: 80px; height: 80px; border-radius: 10px; object-fit: cover; flex-shrink: 0; }
-    .product .info { flex: 1; }
-    .product .info h3 { font-size: 15px; margin-bottom: 4px; }
-    .product .info p { font-size: 16px; font-weight: 600; color: #4CAF50; }
-    .btn { background: #4CAF50; color: #fff; border: none; padding: 10px 16px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
-    .btn-back { background: #999; margin: 0 16px 12px; width: calc(100% - 32px); }
-
-    /* Форма */
-    #form { padding: 0 16px; }
-    input { width: 100%; padding: 12px; margin: 6px 0; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; background: #fff; }
-    .btn-submit { background: #4CAF50; color: #fff; border: none; padding: 14px; border-radius: 10px; width: 100%; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px; }
-  </style>
-</head>
-<body>
-  <div id="catalog">
-    <h1>🌸 Цветик</h1>
-    <div class="carousel" id="carousel"></div>
-    <h2>Все букеты</h2>
-    <div class="catalog" id="list"></div>
-  </div>
-
-  <div id="form" style="display:none;">
-    <button class="btn btn-back" onclick="goBack()">← Назад</button>
-    <h2>Оформление заказа</h2>
-    <input id="name" placeholder="Ваше имя">
-    <input id="phone" placeholder="Телефон (11 цифр)">
-    <input id="email" placeholder="Email">
-    <input id="address" placeholder="Адрес доставки">
-    <input id="date" type="date">
-    <input id="time" type="time">
-    <button class="btn-submit" onclick="submitOrder()">Заказать</button>
-  </div>
-
-  <script>
+<script>
     const tg = window.Telegram.WebApp;
     tg.ready();
     let selectedProduct = null;
 
-    fetch('https://hook.eu1.make.com/vf1jrtyc70svar25ps5goaxntf6c88js')
+    fetch('URL_ТОВАРОВ')
       .then(res => res.json())
       .then(data => {
-        const products = data.result || data;
         const carousel = document.getElementById('carousel');
         const list = document.getElementById('list');
 
-        products.forEach(p => {
-          const price = parseInt(p.PRICE) || 0;
+        data.forEach(p => {
+          const id = p.ID || p.A;
+          const name = p.Название || p.B;
+          const price = parseInt(p.Цена || p.C) || 0;
+          const photo = p.Фото || p.E || '';
+
           // Карусель
           const card = document.createElement('div');
           card.className = 'carousel-card';
           card.innerHTML = `
-            <img src="${p.PREVIEW_PICTURE || ''}" alt="${p.NAME}">
-            <div class="info"><h4>${p.NAME}</h4><p>${price.toLocaleString()} ₽</p></div>
+            <img src="${photo}" alt="${name}">
+            <div class="info"><h4>${name}</h4><p>${price.toLocaleString()} ₽</p></div>
           `;
           carousel.appendChild(card);
 
@@ -82,9 +28,9 @@
           const item = document.createElement('div');
           item.className = 'product';
           item.innerHTML = `
-            <img src="${p.PREVIEW_PICTURE || ''}" alt="${p.NAME}">
-            <div class="info"><h3>${p.NAME}</h3><p>${price.toLocaleString()} ₽</p></div>
-            <button class="btn" onclick="select(${p.ID}, '${p.NAME}', ${price})">Выбрать</button>
+            <img src="${photo}" alt="${name}">
+            <div class="info"><h3>${name}</h3><p>${price.toLocaleString()} ₽</p></div>
+            <button class="btn" onclick="select('${id}', '${name}', ${price})">Выбрать</button>
           `;
           list.appendChild(item);
         });
@@ -93,40 +39,5 @@
         document.getElementById('list').innerHTML = '<p style="text-align:center;color:#999;">Не удалось загрузить каталог</p>';
       });
 
-    function select(id, name, price) {
-      selectedProduct = { id, name, price };
-      document.getElementById('catalog').style.display = 'none';
-      document.getElementById('form').style.display = 'block';
-    }
-
-    function goBack() {
-      document.getElementById('catalog').style.display = 'block';
-      document.getElementById('form').style.display = 'none';
-    }
-
-    function submitOrder() {
-      const order = {
-        product_id: selectedProduct.id,
-        product_name: selectedProduct.name,
-        price: selectedProduct.price,
-        name: document.getElementById('name').value,
-        phone: document.getElementById('phone').value,
-        email: document.getElementById('email').value,
-        address: document.getElementById('address').value,
-        date: document.getElementById('date').value,
-        time: document.getElementById('time').value
-      };
-      fetch('https://hook.eu1.make.com/9t3j6wr4a7k2d9k66ciiw49rgwuo9piz', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(order)
-      }).then(() => {
-        tg.showAlert('Заказ оформлен! Курьер свяжется с вами.');
-        tg.close();
-      }).catch(() => {
-        tg.showAlert('Ошибка. Попробуйте позже.');
-      });
-    }
-  </script>
-</body>
-</html>
+    // ... дальше select, goBack, submitOrder без изменений
+</script>
