@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Цветик</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, sans-serif; padding: 16px; background: #fff; margin: 0; }
+    .product { border: 1px solid #eee; border-radius: 12px; padding: 12px; margin-bottom: 12px; }
+    .product img { width: 100%; border-radius: 8px; max-height: 200px; object-fit: cover; }
+    .product h3 { margin: 8px 0 4px; }
+    .product p { color: #666; margin: 0 0 8px; }
+    .btn { background: #4CAF50; color: #fff; border: none; padding: 12px; border-radius: 8px; width: 100%; font-size: 16px; cursor: pointer; }
+    .btn-back { background: #999; margin-bottom: 12px; }
+    input { width: 100%; padding: 10px; margin: 6px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+    h1 { font-size: 20px; text-align: center; }
+    h2 { font-size: 18px; }
+  </style>
+</head>
+<body>
+  <div id="catalog">
+    <h1>🌸 Каталог Цветик</h1>
+  </div>
+
+  <div id="form" style="display:none;">
+    <button class="btn btn-back" onclick="goBack()">← Назад</button>
+    <h2>Оформление заказа</h2>
+    <input id="name" placeholder="Ваше имя">
+    <input id="phone" placeholder="Телефон (11 цифр)">
+    <input id="email" placeholder="Email">
+    <input id="address" placeholder="Адрес доставки">
+    <input id="date" type="date">
+    <input id="time" type="time">
+    <button class="btn" onclick="submitOrder()">Заказать</button>
+  </div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    let selectedProduct = null;
+
+    fetch('URL_ТОВАРОВ')
+      .then(res => res.json())
+      .then(data => {
+        const catalog = document.getElementById('catalog');
+        const products = data.result || data;
+        products.forEach(p => {
+          const div = document.createElement('div');
+          div.className = 'product';
+          div.innerHTML = `
+            <img src="${p.PREVIEW_PICTURE || ''}" alt="${p.NAME}">
+            <h3>${p.NAME}</h3>
+            <p>💰 ${p.PRICE} ₽</p>
+            <button class="btn" onclick="select(${p.ID}, '${p.NAME}', ${p.PRICE})">Выбрать</button>
+          `;
+          catalog.appendChild(div);
+        });
+      })
+      .catch(() => {
+        document.getElementById('catalog').innerHTML += '<p>Не удалось загрузить каталог.</p>';
+      });
+
+    function select(id, name, price) {
+      selectedProduct = { id, name, price };
+      document.getElementById('catalog').style.display = 'none';
+      document.getElementById('form').style.display = 'block';
+    }
+
+    function goBack() {
+      document.getElementById('catalog').style.display = 'block';
+      document.getElementById('form').style.display = 'none';
+    }
+
+    function submitOrder() {
+      const order = {
+        product_id: selectedProduct.id,
+        product_name: selectedProduct.name,
+        price: selectedProduct.price,
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        address: document.getElementById('address').value,
+        date: document.getElementById('date').value,
+        time: document.getElementById('time').value
+      };
+      fetch('URL_ЗАКАЗА', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order)
+      }).then(() => {
+        tg.showAlert('Заказ оформлен! Курьер свяжется с вами.');
+        tg.close();
+      }).catch(() => {
+        tg.showAlert('Ошибка. Попробуйте позже.');
+      });
+    }
+  </script>
+</body>
+</html>
