@@ -63,29 +63,29 @@
         const carousel = document.getElementById('carousel');
         const list = document.getElementById('list');
 
-        data.forEach(p => {
-          const id = p.ID || p.A;
-          const name = p.Название || p.B;
-          const price = parseInt(p.Цена || p.C) || 0;
-          const photo = p.Фото || p.E || '';
-
-          const card = document.createElement('div');
-          card.className = 'carousel-card';
-          card.innerHTML = `
-            <img src="${photo}" alt="${name}">
-            <div class="info"><h4>${name}</h4><p>${price.toLocaleString()} ₽</p></div>
-          `;
-          carousel.appendChild(card);
-
-          const item = document.createElement('div');
-          item.className = 'product';
-          item.innerHTML = `
-            <img src="${photo}" alt="${name}">
-            <div class="info"><h3>${name}</h3><p>${price.toLocaleString()} ₽</p></div>
-            <button class="btn" onclick="select('${id}', '${name}', ${price})">Выбрать</button>
-          `;
-          list.appendChild(item);
-        });
+      data.forEach(p => {
+        const id = p[0];
+        const name = p[1];
+        const price = parseInt(p[2]) || 0;
+        const photo = p[5] || '';
+      
+        const card = document.createElement('div');
+        card.className = 'carousel-card';
+        card.innerHTML = `
+          <img src="${photo}" alt="${name}">
+          <div class="info"><h4>${name}</h4><p>${price.toLocaleString()} ₽</p></div>
+        `;
+        carousel.appendChild(card);
+      
+        const item = document.createElement('div');
+        item.className = 'product';
+        item.innerHTML = `
+          <img src="${photo}" alt="${name}">
+          <div class="info"><h3>${name}</h3><p>${price.toLocaleString()} ₽</p></div>
+          <button class="btn" onclick="select('${id}', '${name}', ${price})">Выбрать</button>
+        `;
+        list.appendChild(item);
+      });
       })
       .catch(() => {
         document.getElementById('list').innerHTML = '<p style="text-align:center;color:#999;">Не удалось загрузить каталог</p>';
