@@ -40,7 +40,7 @@
     tg.ready();
     let selectedProduct = null;
 
-    fetch('URL_ТОВАРОВ')
+    fetch('https://hook.eu1.make.com/vf1jrtyc70svar25ps5goaxntf6c88js')
       .then(res => res.json())
       .then(data => {
         const catalog = document.getElementById('catalog');
@@ -84,7 +84,7 @@
         date: document.getElementById('date').value,
         time: document.getElementById('time').value
       };
-      fetch('URL_ЗАКАЗА', {
+      fetch('https://hook.eu1.make.com/9t3j6wr4a7k2d9k66ciiw49rgwuo9piz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(order)
