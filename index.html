@@ -8,13 +8,11 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f5f5; padding-bottom: 30px; }
 
-    /* Плашка с названием */
     .header { background: linear-gradient(135deg, #e91e63, #f06292); color: #fff; text-align: center; padding: 20px 16px; font-size: 22px; font-weight: 700; letter-spacing: 1px; box-shadow: 0 4px 12px rgba(233,30,99,0.3); position: sticky; top: 0; z-index: 10; }
     .header span { font-size: 14px; font-weight: 400; opacity: 0.9; display: block; }
 
     h2 { font-size: 18px; padding: 16px 16px 8px; }
 
-    /* Карусель */
     .carousel-wrap { overflow: hidden; padding: 0 16px 16px; }
     .carousel { display: flex; gap: 10px; animation: scroll 20s linear infinite; width: max-content; }
     .carousel-wrap:hover .carousel { animation-play-state: paused; }
@@ -26,7 +24,6 @@
     .carousel-card .info p { font-size: 14px; font-weight: 600; color: #4CAF50; margin-bottom: 6px; }
     .btn-sm { background: #4CAF50; color: #fff; border: none; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
 
-    /* Каталог */
     .catalog { display: flex; flex-direction: column; gap: 12px; padding: 0 16px; }
     .product { background: #fff; border-radius: 16px; padding: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); display: flex; gap: 12px; align-items: center; }
     .product img { width: 70px; height: 70px; border-radius: 10px; object-fit: cover; flex-shrink: 0; }
@@ -35,11 +32,10 @@
     .product .info p { font-size: 16px; font-weight: 600; color: #4CAF50; }
     .btn { background: #4CAF50; color: #fff; border: none; padding: 10px 16px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
 
-    /* Девиз */
     .motto { text-align: center; color: #999; font-size: 13px; padding: 20px 16px; font-style: italic; }
 
-    /* Форма */
     #form { padding: 0 16px; display: none; }
+    #selected-product { background: #fff; border-radius: 16px; padding: 12px; margin-bottom: 12px; display: flex; gap: 12px; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
     input { width: 100%; padding: 12px; margin: 6px 0; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; background: #fff; }
     .btn-submit { background: #4CAF50; color: #fff; border: none; padding: 14px; border-radius: 10px; width: 100%; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px; }
     .btn-back { background: #999; color: #fff; border: none; padding: 12px; border-radius: 10px; width: 100%; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 16px; }
@@ -49,7 +45,7 @@
   <div class="header">🌸 Магазин Цветик<span>доставка цветов с любовью</span></div>
 
   <div id="catalog">
-    <h2>🔥 Популярное</h2>
+    <h2>🔥 Галерея</h2>
     <div class="carousel-wrap">
       <div class="carousel" id="carousel"></div>
     </div>
@@ -60,12 +56,16 @@
 
   <div id="form">
     <h2>Оформление заказа</h2>
-    <input id="name" placeholder="Ваше имя">
-    <input id="phone" placeholder="Телефон (11 цифр)">
+    <div id="selected-product"></div>
+    <input id="name" placeholder="Ваше имя *" required>
+    <input id="phone" placeholder="Телефон (11 цифр) *" required>
     <input id="email" placeholder="Email">
-    <input id="address" placeholder="Адрес доставки">
-    <input id="date" type="date">
-    <input id="time" type="time">
+    <input id="address" placeholder="Адрес доставки *" required>
+    <p style="font-size:12px;color:#999;margin:8px 0 2px;">Дата и время доставки *</p>
+    <div style="display:flex;gap:8px;">
+      <input id="date" type="date" required style="flex:1;">
+      <input id="time" type="time" required style="flex:1;">
+    </div>
     <button class="btn-submit" onclick="submitOrder()">Заказать</button>
     <button class="btn-back" onclick="goBack()">← Назад</button>
   </div>
@@ -80,38 +80,37 @@
       .then(data => {
         const carousel = document.getElementById('carousel');
         const list = document.getElementById('list');
-
-        // Дублируем для бесконечной прокрутки
         const items = [...data, ...data];
 
         items.forEach(p => {
           const id = p[0];
           const name = p[1];
           const price = parseInt(p[2]) || 0;
+          const composition = p[4] || '';
           const photo = p[5] || '';
 
           const card = document.createElement('div');
           card.className = 'carousel-card';
           card.innerHTML = `
             <img src="${photo}" alt="${name}">
-            <div class="info"><h4>${name}</h4><p>${price.toLocaleString()} ₽</p><button class="btn-sm" onclick="select('${id}', '${name}', ${price})">Выбрать</button></div>
+            <div class="info"><h4>${name}</h4><p>${price.toLocaleString()} ₽</p><button class="btn-sm" onclick="select('${id}', '${name}', ${price}, '${photo}', '${composition}')">Выбрать</button></div>
           `;
           carousel.appendChild(card);
         });
 
-        // Статичный каталог (без дублей)
         data.forEach(p => {
           const id = p[0];
           const name = p[1];
           const price = parseInt(p[2]) || 0;
+          const composition = p[4] || '';
           const photo = p[5] || '';
 
           const item = document.createElement('div');
           item.className = 'product';
           item.innerHTML = `
             <img src="${photo}" alt="${name}">
-            <div class="info"><h3>${name}</h3><p>${price.toLocaleString()} ₽</p></div>
-            <button class="btn" onclick="select('${id}', '${name}', ${price})">Выбрать</button>
+            <div class="info"><h3>${name}</h3><p>${price.toLocaleString()} ₽</p><p style="font-size:12px;color:#888;">${composition}</p></div>
+            <button class="btn" onclick="select('${id}', '${name}', ${price}, '${photo}', '${composition}')">Выбрать</button>
           `;
           list.appendChild(item);
         });
@@ -120,8 +119,16 @@
         document.getElementById('list').innerHTML = '<p style="text-align:center;color:#999;">Не удалось загрузить каталог</p>';
       });
 
-    function select(id, name, price) {
-      selectedProduct = { id, name, price };
+    function select(id, name, price, photo, composition) {
+      selectedProduct = { id, name, price, photo, composition };
+      document.getElementById('selected-product').innerHTML = `
+        <img src="${photo}" style="width:70px;height:70px;border-radius:10px;object-fit:cover;">
+        <div>
+          <b>${name}</b>
+          <p style="color:#4CAF50;font-weight:600;">${price.toLocaleString()} ₽</p>
+          <p style="font-size:12px;color:#888;">${composition}</p>
+        </div>
+      `;
       document.getElementById('catalog').style.display = 'none';
       document.getElementById('form').style.display = 'block';
     }
@@ -132,16 +139,27 @@
     }
 
     function submitOrder() {
+      const name = document.getElementById('name').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const address = document.getElementById('address').value.trim();
+      const date = document.getElementById('date').value;
+      const time = document.getElementById('time').value;
+
+      if (!name || !phone || !address || !date || !time) {
+        tg.showAlert('Пожалуйста, заполните все обязательные поля: имя, телефон, адрес, дату и время доставки.');
+        return;
+      }
+
       const order = {
         product_id: selectedProduct.id,
         product_name: selectedProduct.name,
         price: selectedProduct.price,
-        name: document.getElementById('name').value,
-        phone: document.getElementById('phone').value,
-        email: document.getElementById('email').value,
-        address: document.getElementById('address').value,
-        date: document.getElementById('date').value,
-        time: document.getElementById('time').value
+        name,
+        phone,
+        email: document.getElementById('email').value.trim(),
+        address,
+        date,
+        time
       };
       fetch('https://hook.eu1.make.com/9t3j6wr4a7k2d9k66ciiw49rgwuo9piz', {
         method: 'POST',
