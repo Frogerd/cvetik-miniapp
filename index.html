@@ -36,7 +36,8 @@
 
     #form { padding: 0 16px; display: none; }
     #selected-product { background: #fff; border-radius: 16px; padding: 12px; margin-bottom: 12px; display: flex; gap: 12px; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
-    input { width: 100%; padding: 12px; margin: 6px 0; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; background: #fff; }
+    input, textarea { width: 100%; padding: 12px; margin: 6px 0; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; background: #fff; }
+    textarea { resize: vertical; min-height: 70px; }
     .btn-submit { background: #4CAF50; color: #fff; border: none; padding: 14px; border-radius: 10px; width: 100%; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px; }
     .btn-back { background: #999; color: #fff; border: none; padding: 12px; border-radius: 10px; width: 100%; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 16px; }
   </style>
@@ -66,6 +67,7 @@
       <input id="date" type="date" required style="flex:1;">
       <input id="time" type="time" required style="flex:1;">
     </div>
+    <textarea id="card" placeholder="Текст открытки (по желанию)"></textarea>
     <button class="btn-submit" onclick="submitOrder()">Заказать</button>
     <button class="btn-back" onclick="goBack()">← Назад</button>
   </div>
@@ -159,7 +161,8 @@
         email: document.getElementById('email').value.trim(),
         address,
         date,
-        time
+        time,
+        card: document.getElementById('card').value.trim()
       };
       fetch('https://hook.eu1.make.com/9t3j6wr4a7k2d9k66ciiw49rgwuo9piz', {
         method: 'POST',
