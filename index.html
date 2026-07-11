@@ -87,7 +87,7 @@
         items.forEach(p => {
           const id = p[0];
           const name = p[1];
-          const price = parseInt(p[2]) || 0;
+          const price = parseInt(String(p[2]).replace(/\s/g, '').replace(/[^\d]/g, '')) || 0;
           const composition = p[4] || '';
           const photo = p[5] || '';
 
@@ -103,7 +103,7 @@
         data.forEach(p => {
           const id = p[0];
           const name = p[1];
-          const price = parseInt(p[2]) || 0;
+          const price = parseInt(String(p[2]).replace(/\s/g, '').replace(/[^\d]/g, '')) || 0;
           const composition = p[4] || '';
           const photo = p[5] || '';
 
