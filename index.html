@@ -77,7 +77,7 @@
     tg.ready();
     let selectedProduct = null;
 
-    fetch('URL_ТОВАРОВ')
+    fetch('https://hook.eu1.make.com/vf1jrtyc70svar25ps5goaxntf6c88js')
       .then(res => res.json())
       .then(data => {
         const carousel = document.getElementById('carousel');
@@ -164,7 +164,7 @@
         time,
         card: document.getElementById('card').value.trim()
       };
-      fetch('URL_ЗАКАЗА', {
+      fetch('https://hook.eu1.make.com/9t3j6wr4a7k2d9k66ciiw49rgwuo9piz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(order)
