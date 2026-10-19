@@ -38,7 +38,7 @@
       top: 0;
       z-index: 10;
     }
-    .logo { width: 40px; height: 40px; border-radius: 12px; background: var(--primary-light); object-fit: cover; }
+    .logo { width: 40px; height: 40px; border-radius: 12px; background: var(--primary-light); object-fit: cover; display: flex; align-items: center; justify-content: center; font-size: 20px; }
     .brand { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
     .brand span { display: block; font-size: 12px; color: var(--text-muted); font-weight: 400; }
 
@@ -49,11 +49,12 @@
       overflow: hidden;
       position: relative;
       box-shadow: var(--card-shadow);
+      background: #e0e0e0; /* Заглушка пока грузится баннер */
     }
     .banner img { width: 100%; height: 180px; object-fit: cover; display: block; }
     .banner-overlay {
       position: absolute; inset: 0;
-      background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+      background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
       display: flex; flex-direction: column; justify-content: flex-end;
       padding: 16px; color: white;
     }
@@ -72,10 +73,12 @@
       background: #fff; border-radius: var(--radius); overflow: hidden; 
       box-shadow: var(--card-shadow);
       transition: transform 0.2s ease;
+      display: flex; flex-direction: column;
     }
     .carousel-card:active { transform: scale(0.96); }
-    .carousel-card img { width: 100%; height: 140px; object-fit: cover; }
-    .carousel-card .info { padding: 12px; text-align: left; }
+    .carousel-card .img-wrapper { width: 100%; height: 140px; background: #f0f0f0; }
+    .carousel-card img { width: 100%; height: 100%; object-fit: cover; }
+    .carousel-card .info { padding: 12px; text-align: left; flex: 1; display: flex; flex-direction: column; }
     .carousel-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .carousel-card .price { font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
 
@@ -87,7 +90,8 @@
       transition: transform 0.2s ease;
     }
     .product:active { transform: scale(0.98); }
-    .product img { width: 90px; height: 90px; border-radius: 16px; object-fit: cover; flex-shrink: 0; background: #eee; }
+    .product .img-wrapper { width: 90px; height: 90px; border-radius: 16px; background: #f0f0f0; flex-shrink: 0; overflow: hidden; }
+    .product img { width: 100%; height: 100%; object-fit: cover; }
     .product .info { flex: 1; min-width: 0; }
     .product h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .product .desc { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -112,7 +116,8 @@
       background: #fff; border-radius: var(--radius); padding: 16px; margin-bottom: 24px; 
       display: flex; gap: 16px; align-items: center; box-shadow: var(--card-shadow); 
     }
-    #selected-product img { width: 80px; height: 80px; border-radius: 16px; object-fit: cover; }
+    #selected-product .img-wrapper { width: 80px; height: 80px; border-radius: 16px; overflow: hidden; background: #f0f0f0; }
+    #selected-product img { width: 100%; height: 100%; object-fit: cover; }
 
     .form-group { margin-bottom: 16px; }
     .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; padding-left: 4px; }
@@ -140,21 +145,21 @@
     .bg-image {
       position: absolute; top: 0; left: 0; right: 0; bottom: 0;
       background-size: cover; background-position: center;
-      opacity: 0.05; z-index: -1; pointer-events: none;
+      opacity: 0.03; z-index: -1; pointer-events: none;
     }
   </style>
 </head>
 <body>
-  <!-- Фоновая текстура -->
   <div class="bg-image" style="background-image: url('img/bg-pattern.jpg');"></div>
 
   <div class="top-nav">
-    <img src="img/logo.png" class="logo" alt="Logo" onerror="this.style.display='none'">
+    <div class="logo">🌸</div>
     <div class="brand">Цветик<span>доставка с любовью</span></div>
   </div>
 
   <div id="catalog">
     <div class="banner">
+      <!-- Заглушка на случай если твоя картинка не прогрузится -->
       <img src="img/banner.jpg" alt="Баннер" onerror="this.src='https://images.unsplash.com/photo-1563241527-3004b7be0ffd?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80'">
       <div class="banner-overlay">
         <h1>Свежие цветы</h1>
@@ -213,13 +218,13 @@
   <script>
     const tg = window.Telegram.WebApp;
     tg.ready();
-    tg.expand(); // Разворачиваем на весь экран
+    tg.expand();
     let selectedProduct = null;
 
-    // Твоя таблица
+    // Ссылка на таблицу
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/12NFsicWYaYWPCbZpMYIsb7B8m9q_yb9_236hUJClTrE/export?format=csv";
 
-    // Красивая функция для парсинга CSV (учитывает кавычки и запятые внутри)
+    // 1. ИСПРАВЛЕННЫЙ ПАРСЕР CSV (понимает запятые внутри кавычек)
     function parseCSV(text) {
       const rows = [];
       let currentRow = [];
@@ -255,7 +260,7 @@
       .then(res => res.text())
       .then(csvText => {
         const rows = parseCSV(csvText);
-        const headers = rows[0];
+        // Пропускаем заголовок, берем данные
         const data = rows.slice(1).map(row => {
           return {
             id: row[0],
@@ -264,7 +269,7 @@
             composition: row[4],
             photo: row[5]
           };
-        }).filter(item => item.name);
+        }).filter(item => item.name && item.name !== 'Название'); // Фильтруем мусор
         renderCatalog(data);
       })
       .catch((err) => {
@@ -272,33 +277,38 @@
         document.getElementById('list').innerHTML = '<p style="text-align:center;color:#999;padding:20px;">Не удалось загрузить каталог</p>';
       });
 
+    // 2. КРАСИВЫЙ РЕНДЕР (с проверкой на битые ссылки)
     function renderCatalog(data) {
       const carousel = document.getElementById('carousel');
       const list = document.getElementById('list');
 
-      // В карусель берем первые 4 товара
+      // Карусель (первые 4)
       data.slice(0, 4).forEach(p => {
         const priceNum = parseInt(String(p.price).replace(/\D/g, '')) || 0;
         const card = document.createElement('div');
         card.className = 'carousel-card';
         card.innerHTML = `
-          <img src="${p.photo}" alt="${p.name}" loading="lazy">
+          <div class="img-wrapper">
+            <img src="${p.photo}" alt="${p.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/150x150/e8f5e9/0f5132?text=🌸'">
+          </div>
           <div class="info">
             <h4>${p.name}</h4>
             <div class="price">${priceNum.toLocaleString()} ₽</div>
-            <button class="btn" style="width:100%; padding:8px;" onclick="selectProduct(${JSON.stringify(p).replace(/"/g, '&quot;')})">Выбрать</button>
+            <button class="btn" style="width:100%; padding:8px; margin-top:auto;" onclick="selectProduct(${JSON.stringify(p).replace(/"/g, '&quot;')})">Выбрать</button>
           </div>
         `;
         carousel.appendChild(card);
       });
 
-      // В список кидаем всё
+      // Список (всё)
       data.forEach(p => {
         const priceNum = parseInt(String(p.price).replace(/\D/g, '')) || 0;
         const item = document.createElement('div');
         item.className = 'product';
         item.innerHTML = `
-          <img src="${p.photo}" alt="${p.name}" loading="lazy">
+          <div class="img-wrapper">
+            <img src="${p.photo}" alt="${p.name}" loading="lazy" onerror="this.src='https://via.placeholder.com/90x90/e8f5e9/0f5132?text=🌸'">
+          </div>
           <div class="info">
             <h3>${p.name}</h3>
             <div class="desc">${p.composition || 'Красивый букет'}</div>
@@ -314,7 +324,9 @@
       selectedProduct = product;
       const priceNum = parseInt(String(product.price).replace(/\D/g, '')) || 0;
       document.getElementById('selected-product').innerHTML = `
-        <img src="${product.photo}">
+        <div class="img-wrapper">
+          <img src="${product.photo}" onerror="this.src='https://via.placeholder.com/80x80/e8f5e9/0f5132?text=🌸'">
+        </div>
         <div>
           <div style="font-weight:700; font-size:16px; margin-bottom:4px;">${product.name}</div>
           <div style="font-size:13px; color:#757575; margin-bottom:8px;">${product.composition}</div>
@@ -353,7 +365,6 @@
         user_id: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : null
       };
 
-      // Блокируем кнопку от двойного нажатия
       const btn = document.querySelector('.btn-submit');
       btn.innerText = 'Отправляем...';
       btn.disabled = true;
