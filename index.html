@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Цветик — v5.0</title>
+  <title>Цветик — v6.0</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root { --primary: #0f5132; --bg: #fafafa; --card-shadow: 0 8px 24px rgba(0,0,0,0.04); --radius: 20px; }
@@ -54,7 +54,7 @@
       <div class="logo">🌸</div>
       <div class="brand">Цветик<span>доставка с любовью</span></div>
     </div>
-    <div class="version-badge">v5.0</div>
+    <div class="version-badge">v6.0</div>
   </div>
 
   <div id="catalog">
@@ -90,43 +90,75 @@
     const BACKEND_URL = "https://your-ngrok-url.ngrok-free.app"; 
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/12NFsicWYaYWPCbZpMYIsb7B8m9q_yb9_236hUJClTrE/export?format=csv";
 
-    // ===== ПАРСЕР (просто разбивает по запятым, убирает кавычки) =====
-    // Мы используем самый простой сплит, потому что Google CSV можно легко почистить
-    function parseCSV(text) {
-      return text.split('\n').map(row => {
-        return row.split(',').map(cell => {
-          // Убираем пробелы и двойные кавычки с концов
-          return cell.replace(/^"|"$/g, '').trim(); 
-        });
-      }).filter(row => row.length > 1);
+    // ===== НАДЕЖНЫЙ ПАРСЕР СБОРКИ МАССИВА =====
+    function buildProductsArray(csvText) {
+      const lines = csvText.split('\n');
+      const products = [];
+
+      // Пропускаем первую строку (заголовки)
+      for (let i = 1; i < lines.length; i++) {
+        let line = lines[i].trim();
+        if (!line) continue; // Пропускаем пустые строки
+
+        // Разбиваем строку по запятым
+        let cols = line.split(',');
+
+        // Если из-за запятых внутри текста колонок больше 5, 
+        // мы "склеиваем" лишние куски обратно. 
+        // (В твоей таблице состав и описание могут содержать запятые).
+        // Мы знаем, что у нас 5 колонок. Ссылка всегда последняя (5-я).
+        // Поэтому мы берем:
+        // - Название = cols[0]
+        // - Цена = cols[1]
+        // - Состав = cols[2] (склеиваем всё, что между 2-й и 4-й запятой)
+        // - Описание = cols[3] (склеиваем всё, что перед последней запятой)
+        // - Ссылка = последний элемент
+        
+        // Но так как ссылка может содержать запятые (что маловероятно), сделаем проще:
+        // Ссылка — это всегда последний элемент.
+        let photo = cols[cols.length - 1].replace(/^"|"$/g, '').trim();
+        
+        // Описание — это всегда предпоследний элемент
+        let description = cols[cols.length - 2].replace(/^"|"$/g, '').trim();
+
+        // Состав и Название + Цена — это всё, что осталось.
+        // Мы знаем, что Название и Цена идут первыми двумя.
+        let name = cols[0].replace(/^"|"$/g, '').trim();
+        let price = cols[1].replace(/^"|"$/g, '').trim();
+
+        // Всё, что между ценой и описанием — это Состав (склеиваем запятыми)
+        let compositionParts = cols.slice(2, cols.length - 2);
+        let composition = compositionParts.join(', ').replace(/^"|"$/g, '').trim();
+
+        // Если название не пустое и не "Название", добавляем в массив
+        if (name && name !== "Название") {
+          products.push({
+            name: name,
+            price: price,
+            composition: composition,
+            description: description,
+            photo: photo
+          });
+        }
+      }
+      return products;
     }
 
     fetch(SHEET_CSV_URL)
       .then(res => res.text())
       .then(csvText => {
-        const rows = parseCSV(csvText);
+        // Получаем массив объектов
+        const products = buildProductsArray(csvText);
+        console.log("Наш массив товаров:", products); // Проверка в консоли
         
-        // Берем данные, пропуская заголовок
-        const data = rows.slice(1).map(row => {
-          return {
-            // ВАЖНО: Жестко указываем, какая колонка чем является!
-            name: row[0] || "Без названия",       // Название
-            price: row[1] || "0",                 // Цена
-            composition: row[2] || "",            // Состав
-            description: row[3] || "",            // Описание
-            photo: row[4] || ""                   // Ссылка на картинку
-          };
-        }).filter(item => item.name && item.name !== 'Название');
-        
-        console.log("Обработанные данные:", data); // Выведем в консоль для проверки
-        renderCatalog(data);
+        renderCatalog(products);
       })
       .catch((err) => {
         console.error(err);
         document.getElementById('list').innerHTML = '<p style="text-align:center;color:#999;padding:20px;">Не удалось загрузить каталог</p>';
       });
 
-    function renderCatalog(data) {
+    function renderCatalog(products) {
       const carousel = document.getElementById('carousel');
       const list = document.getElementById('list');
 
@@ -135,7 +167,7 @@
         return url + (url.includes('?') ? '&' : '?') + 'v=' + Date.now();
       };
 
-      data.slice(0, 4).forEach(p => {
+      products.slice(0, 4).forEach(p => {
         const priceNum = parseInt(String(p.price).replace(/\D/g, '')) || 0;
         const card = document.createElement('div');
         card.className = 'carousel-card';
@@ -149,7 +181,7 @@
         carousel.appendChild(card);
       });
 
-      data.forEach(p => {
+      products.forEach(p => {
         const priceNum = parseInt(String(p.price).replace(/\D/g, '')) || 0;
         const item = document.createElement('div');
         item.className = 'product';
