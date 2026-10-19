@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Цветик — v7.0</title>
+  <title>Цветик — v8.0</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root { --primary: #0f5132; --bg: #fafafa; --card-shadow: 0 8px 24px rgba(0,0,0,0.04); --radius: 20px; }
@@ -15,7 +15,7 @@
     .logo { width: 40px; height: 40px; border-radius: 12px; background: #e8f5e9; display: flex; align-items: center; justify-content: center; font-size: 20px; }
     .brand { font-size: 20px; font-weight: 700; }
     .brand span { display: block; font-size: 12px; color: #757575; font-weight: 400; }
-    .version-badge { background: #2196F3; color: white; padding: 4px 8px; border-radius: 8px; font-size: 12px; font-weight: bold; }
+    .version-badge { background: #8bc34a; color: white; padding: 4px 8px; border-radius: 8px; font-size: 12px; font-weight: bold; }
 
     .banner { margin: 0 16px 24px; border-radius: var(--radius); overflow: hidden; position: relative; box-shadow: var(--card-shadow); }
     .banner img { width: 100%; height: 180px; object-fit: cover; display: block; }
@@ -54,7 +54,7 @@
       <div class="logo">🌸</div>
       <div class="brand">Цветик<span>доставка с любовью</span></div>
     </div>
-    <div class="version-badge">v7.0</div>
+    <div class="version-badge">v8.0</div>
   </div>
 
   <div id="catalog">
@@ -87,64 +87,69 @@
     const tg = window.Telegram.WebApp; tg.ready(); tg.expand();
     let selectedProduct = null;
     
+    // ССЫЛКА ОТ NGROK (для отправки заказа)
     const BACKEND_URL = "https://your-ngrok-url.ngrok-free.app"; 
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/12NFsicWYaYWPCbZpMYIsb7B8m9q_yb9_236hUJClTrE/export?format=csv";
 
-    // ===== СБОРЩИК МАССИВА (С СКЛЕЙКОЙ ОПИСАНИЯ) =====
-    function buildProductsArray(csvText) {
-      const lines = csvText.split('\n');
-      const products = [];
-
-      for (let i = 1; i < lines.length; i++) {
-        let line = lines[i].trim();
-        if (!line) continue; 
-
-        let cols = line.split(',');
-
-        // 1. Ссылка — это всегда последний элемент
-        let photo = cols.pop().replace(/^"|"$/g, '').trim();
+    // ===== ИДЕАЛЬНЫЙ СТАНДАРТНЫЙ ПАРСЕР =====
+    function parseCSV(text) {
+      const rows = [];
+      let currentRow = [];
+      let currentCell = '';
+      let inQuotes = false;
+      
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
         
-        // 2. Название и Цена — первые два элемента
-        let name = cols[0].replace(/^"|"$/g, '').trim();
-        let price = cols[1].replace(/^"|"$/g, '').trim();
-
-        // 3. Всё остальное — это Состав и Описание.
-        // Состав — это первый кусок из оставшихся.
-        // Описание — это все остальные куски, склеенные обратно.
-        let middleParts = cols.slice(2); 
-        let composition = "";
-        let description = "";
-
-        if (middleParts.length > 0) {
-            composition = middleParts[0].replace(/^"|"$/g, '').trim();
-            if (middleParts.length > 1) {
-                // Склеиваем все оставшиеся куски описания через запятую
-                description = middleParts.slice(1).join(', ').replace(/^"|"$/g, '').trim();
-            }
-        }
-
-        // Убираем лишние кавычки в конце, если остались
-        if (description.endsWith('"')) description = description.slice(0, -1);
-        if (composition.endsWith('"')) composition = composition.slice(0, -1);
-
-        if (name && name !== "Название") {
-          products.push({
-            name: name,
-            price: price,
-            composition: composition,
-            description: description,
-            photo: photo
-          });
+        if (char === '"') {
+          if (inQuotes && text[i + 1] === '"') {
+            currentCell += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } 
+        else if (char === ',' && !inQuotes) {
+          currentRow.push(currentCell.trim());
+          currentCell = '';
+        } 
+        else if ((char === '\n' || char === '\r') && !inQuotes) {
+          if (currentCell || currentRow.length > 0) {
+            currentRow.push(currentCell.trim());
+            rows.push(currentRow);
+            currentRow = [];
+            currentCell = '';
+          }
+        } 
+        else {
+          currentCell += char;
         }
       }
-      return products;
+      
+      if (currentCell || currentRow.length > 0) {
+        currentRow.push(currentCell.trim());
+        rows.push(currentRow);
+      }
+      
+      return rows;
     }
 
     fetch(SHEET_CSV_URL)
       .then(res => res.text())
       .then(csvText => {
-        const products = buildProductsArray(csvText);
-        console.log("Проверка данных:", products); // Открой консоль, чтобы увидеть, правильно ли собрались данные
+        const rows = parseCSV(csvText);
+        
+        // Пропускаем заголовок и собираем массив объектов
+        const products = rows.slice(1).map(row => {
+          return {
+            name: row[0] || "Без названия",       // 1-я колонка
+            price: row[1] || "0",                 // 2-я колонка
+            composition: row[2] || "",            // 3-я колонка (Состав)
+            description: row[3] || "",            // 4-я колонка (Описание)
+            photo: row[4] || ""                   // 5-я колонка (Фото)
+          };
+        }).filter(item => item.name && item.name !== 'Название');
+        
         renderCatalog(products);
       })
       .catch((err) => {
