@@ -2,142 +2,334 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Цветик</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Цветик — Доставка цветов</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f5f5; padding-bottom: 30px; }
+    :root {
+      --primary: #0f5132;
+      --primary-light: #e8f5e9;
+      --accent: #e91e63;
+      --bg: #fafafa;
+      --text: #1a1a1a;
+      --text-muted: #757575;
+      --card-shadow: 0 8px 24px rgba(0,0,0,0.04);
+      --radius: 20px;
+    }
 
-    .header { background: linear-gradient(135deg, #e91e63, #f06292); color: #fff; text-align: center; padding: 20px 16px; font-size: 22px; font-weight: 700; letter-spacing: 1px; box-shadow: 0 4px 12px rgba(233,30,99,0.3); position: sticky; top: 0; z-index: 10; }
-    .header span { font-size: 14px; font-weight: 400; opacity: 0.9; display: block; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+      background: var(--bg); 
+      color: var(--text);
+      padding-bottom: 40px;
+      line-height: 1.4;
+    }
 
-    h2 { font-size: 18px; padding: 16px 16px 8px; }
+    /* --- ШАПКА --- */
+    .top-nav {
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .logo { width: 40px; height: 40px; border-radius: 12px; background: var(--primary-light); object-fit: cover; }
+    .brand { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+    .brand span { display: block; font-size: 12px; color: var(--text-muted); font-weight: 400; }
 
-    .carousel-wrap { overflow: hidden; padding: 0 16px 16px; }
-    .carousel { display: flex; gap: 10px; animation: scroll 20s linear infinite; width: max-content; }
-    .carousel-wrap:hover .carousel { animation-play-state: paused; }
-    @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-    .carousel-card { flex: 0 0 180px; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
-    .carousel-card img { width: 100%; height: 120px; object-fit: cover; }
-    .carousel-card .info { padding: 8px 10px; text-align: center; }
-    .carousel-card .info h4 { font-size: 13px; margin-bottom: 4px; }
-    .carousel-card .info p { font-size: 14px; font-weight: 600; color: #4CAF50; margin-bottom: 6px; }
-    .btn-sm { background: #4CAF50; color: #fff; border: none; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
+    /* --- БАННЕР --- */
+    .banner {
+      margin: 0 16px 24px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: relative;
+      box-shadow: var(--card-shadow);
+    }
+    .banner img { width: 100%; height: 180px; object-fit: cover; display: block; }
+    .banner-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+      display: flex; flex-direction: column; justify-content: flex-end;
+      padding: 16px; color: white;
+    }
+    .banner-overlay h1 { font-size: 22px; margin-bottom: 4px; }
+    .banner-overlay p { font-size: 13px; opacity: 0.9; }
 
-    .catalog { display: flex; flex-direction: column; gap: 12px; padding: 0 16px; }
-    .product { background: #fff; border-radius: 16px; padding: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); display: flex; gap: 12px; align-items: center; }
-    .product img { width: 70px; height: 70px; border-radius: 10px; object-fit: cover; flex-shrink: 0; }
-    .product .info { flex: 1; }
-    .product .info h3 { font-size: 15px; margin-bottom: 4px; }
-    .product .info p { font-size: 16px; font-weight: 600; color: #4CAF50; }
-    .btn { background: #4CAF50; color: #fff; border: none; padding: 10px 16px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    /* --- ЗАГОЛОВКИ --- */
+    .section-title { font-size: 18px; font-weight: 700; padding: 0 16px 12px; letter-spacing: -0.3px; }
 
-    .motto { text-align: center; color: #999; font-size: 13px; padding: 20px 16px; font-style: italic; }
+    /* --- КАРУСЕЛЬ --- */
+    .carousel-wrap { overflow-x: auto; scroll-snap-type: x mandatory; padding: 0 16px 16px; display: flex; gap: 12px; scrollbar-width: none; }
+    .carousel-wrap::-webkit-scrollbar { display: none; }
+    
+    .carousel-card { 
+      flex: 0 0 160px; scroll-snap-align: start;
+      background: #fff; border-radius: var(--radius); overflow: hidden; 
+      box-shadow: var(--card-shadow);
+      transition: transform 0.2s ease;
+    }
+    .carousel-card:active { transform: scale(0.96); }
+    .carousel-card img { width: 100%; height: 140px; object-fit: cover; }
+    .carousel-card .info { padding: 12px; text-align: left; }
+    .carousel-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .carousel-card .price { font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
 
-    #form { padding: 0 16px; display: none; }
-    #selected-product { background: #fff; border-radius: 16px; padding: 12px; margin-bottom: 12px; display: flex; gap: 12px; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
-    input, textarea { width: 100%; padding: 12px; margin: 6px 0; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; background: #fff; }
-    textarea { resize: vertical; min-height: 70px; }
-    .btn-submit { background: #4CAF50; color: #fff; border: none; padding: 14px; border-radius: 10px; width: 100%; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px; }
-    .btn-back { background: #999; color: #fff; border: none; padding: 12px; border-radius: 10px; width: 100%; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 16px; }
+    /* --- СЕТКА КАТАЛОГА --- */
+    .catalog { display: flex; flex-direction: column; gap: 16px; padding: 0 16px; }
+    .product { 
+      background: #fff; border-radius: var(--radius); padding: 12px; 
+      box-shadow: var(--card-shadow); display: flex; gap: 16px; align-items: center;
+      transition: transform 0.2s ease;
+    }
+    .product:active { transform: scale(0.98); }
+    .product img { width: 90px; height: 90px; border-radius: 16px; object-fit: cover; flex-shrink: 0; background: #eee; }
+    .product .info { flex: 1; min-width: 0; }
+    .product h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .product .desc { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .product .price { font-size: 16px; font-weight: 700; color: var(--primary); }
+
+    .btn { 
+      background: var(--primary); color: #fff; border: none; 
+      padding: 10px 16px; border-radius: 12px; font-size: 13px; font-weight: 600; 
+      cursor: pointer; white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(15, 81, 50, 0.2);
+      transition: opacity 0.2s;
+    }
+    .btn:active { opacity: 0.8; }
+
+    .motto { text-align: center; color: var(--text-muted); font-size: 13px; padding: 32px 16px; font-style: italic; }
+
+    /* --- ФОРМА --- */
+    #form { padding: 0 16px; display: none; animation: slideUp 0.3s ease; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    
+    #selected-product { 
+      background: #fff; border-radius: var(--radius); padding: 16px; margin-bottom: 24px; 
+      display: flex; gap: 16px; align-items: center; box-shadow: var(--card-shadow); 
+    }
+    #selected-product img { width: 80px; height: 80px; border-radius: 16px; object-fit: cover; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; padding-left: 4px; }
+    input, textarea { 
+      width: 100%; padding: 16px; border: 2px solid transparent; border-radius: 14px; 
+      font-size: 15px; background: #fff; color: var(--text);
+      box-shadow: var(--card-shadow);
+      transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus { outline: none; border-color: var(--primary); }
+    textarea { resize: vertical; min-height: 80px; }
+    
+    .btn-submit { 
+      background: var(--primary); color: #fff; border: none; 
+      padding: 18px; border-radius: 16px; width: 100%; font-size: 16px; font-weight: 600; 
+      cursor: pointer; margin-top: 8px;
+      box-shadow: 0 8px 20px rgba(15, 81, 50, 0.3);
+    }
+    .btn-back { 
+      background: transparent; color: var(--text-muted); border: none; 
+      padding: 16px; border-radius: 16px; width: 100%; font-size: 15px; font-weight: 600; 
+      cursor: pointer; margin-top: 8px;
+    }
+    
+    .bg-image {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background-size: cover; background-position: center;
+      opacity: 0.05; z-index: -1; pointer-events: none;
+    }
   </style>
 </head>
 <body>
-  <div class="header">🌸 Магазин Цветик<span>доставка цветов с любовью</span></div>
+  <!-- Фоновая текстура -->
+  <div class="bg-image" style="background-image: url('img/bg-pattern.jpg');"></div>
+
+  <div class="top-nav">
+    <img src="img/logo.png" class="logo" alt="Logo" onerror="this.style.display='none'">
+    <div class="brand">Цветик<span>доставка с любовью</span></div>
+  </div>
 
   <div id="catalog">
-    <h2>🔥 Популярное</h2>
-    <div class="carousel-wrap">
-      <div class="carousel" id="carousel"></div>
+    <div class="banner">
+      <img src="img/banner.jpg" alt="Баннер" onerror="this.src='https://images.unsplash.com/photo-1563241527-3004b7be0ffd?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80'">
+      <div class="banner-overlay">
+        <h1>Свежие цветы</h1>
+        <p>Соберем и доставим за 2 часа</p>
+      </div>
     </div>
-    <h2>🌷 Все букеты</h2>
+
+    <h2 class="section-title">✨ Хиты продаж</h2>
+    <div class="carousel-wrap" id="carousel"></div>
+    
+    <h2 class="section-title">🌷 Весь каталог</h2>
     <div class="catalog" id="list"></div>
+    
     <div class="motto">— Цветик: каждый букет — маленькое чудо —</div>
   </div>
 
   <div id="form">
-    <h2>Оформление заказа</h2>
+    <h2 class="section-title" style="padding-left:0; margin-bottom:16px;">Оформление</h2>
     <div id="selected-product"></div>
-    <input id="name" placeholder="Ваше имя *" required>
-    <input id="phone" placeholder="Телефон (11 цифр) *" required>
-    <input id="email" placeholder="Email">
-    <input id="address" placeholder="Адрес доставки *" required>
-    <p style="font-size:12px;color:#999;margin:8px 0 2px;">Дата и время доставки *</p>
-    <div style="display:flex;gap:8px;">
-      <input id="date" type="date" required style="flex:1;">
-      <input id="time" type="time" required style="flex:1;">
+    
+    <div class="form-group">
+      <label>Ваше имя *</label>
+      <input id="name" placeholder="Как к вам обращаться?" required>
     </div>
-    <textarea id="card" placeholder="Текст открытки (по желанию)"></textarea>
-    <button class="btn-submit" onclick="submitOrder()">Заказать</button>
-    <button class="btn-back" onclick="goBack()">← Назад</button>
+    
+    <div class="form-group">
+      <label>Телефон *</label>
+      <input id="phone" type="tel" placeholder="+7 (999) 123-45-67" required>
+    </div>
+    
+    <div class="form-group">
+      <label>Адрес доставки *</label>
+      <input id="address" placeholder="Улица, дом, квартира" required>
+    </div>
+
+    <div style="display:flex; gap:12px;">
+      <div class="form-group" style="flex:1;">
+        <label>Дата *</label>
+        <input id="date" type="date" required>
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label>Время *</label>
+        <input id="time" type="time" required>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label>Текст открытки</label>
+      <textarea id="card" placeholder="Что написать на открытке? (необязательно)"></textarea>
+    </div>
+
+    <button class="btn-submit" onclick="submitOrder()">Оформить заказ</button>
+    <button class="btn-back" onclick="goBack()">← Вернуться в каталог</button>
   </div>
 
   <script>
     const tg = window.Telegram.WebApp;
     tg.ready();
+    tg.expand(); // Разворачиваем на весь экран
     let selectedProduct = null;
 
-    fetch('https://hook.eu1.make.com/vf1jrtyc70svar25ps5goaxntf6c88js')
-      .then(res => res.json())
-      .then(data => {
-        const carousel = document.getElementById('carousel');
-        const list = document.getElementById('list');
-        const items = [...data, ...data];
+    // Твоя таблица
+    const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/12NFsicWYaYWPCbZpMYIsb7B8m9q_yb9_236hUJClTrE/export?format=csv";
 
-        items.forEach(p => {
-          const id = p[0];
-          const name = p[1];
-          const price = parseInt(String(p[2]).replace(/\s/g, '').replace(/[^\d]/g, '')) || 0;
-          const composition = p[4] || '';
-          const photo = p[5] || '';
+    // Красивая функция для парсинга CSV (учитывает кавычки и запятые внутри)
+    function parseCSV(text) {
+      const rows = [];
+      let currentRow = [];
+      let currentCell = '';
+      let inQuotes = false;
+      
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          currentRow.push(currentCell.trim());
+          currentCell = '';
+        } else if ((char === '\n' || char === '\r') && !inQuotes) {
+          if (currentCell || currentRow.length > 0) {
+            currentRow.push(currentCell.trim());
+            rows.push(currentRow);
+            currentRow = [];
+            currentCell = '';
+          }
+        } else {
+          currentCell += char;
+        }
+      }
+      if (currentCell || currentRow.length > 0) {
+        currentRow.push(currentCell.trim());
+        rows.push(currentRow);
+      }
+      return rows;
+    }
 
-          const card = document.createElement('div');
-          card.className = 'carousel-card';
-          card.innerHTML = `
-            <img src="${photo}" alt="${name}">
-            <div class="info"><h4>${name}</h4><p>${price.toLocaleString()} ₽</p><button class="btn-sm" onclick="select('${id}', '${name}', ${price}, '${photo}', '${composition}')">Выбрать</button></div>
-          `;
-          carousel.appendChild(card);
-        });
-
-        data.forEach(p => {
-          const id = p[0];
-          const name = p[1];
-          const price = parseInt(String(p[2]).replace(/\s/g, '').replace(/[^\d]/g, '')) || 0;
-          const composition = p[4] || '';
-          const photo = p[5] || '';
-
-          const item = document.createElement('div');
-          item.className = 'product';
-          item.innerHTML = `
-            <img src="${photo}" alt="${name}">
-            <div class="info"><h3>${name}</h3><p>${price.toLocaleString()} ₽</p><p style="font-size:12px;color:#888;">${composition}</p></div>
-            <button class="btn" onclick="select('${id}', '${name}', ${price}, '${photo}', '${composition}')">Выбрать</button>
-          `;
-          list.appendChild(item);
-        });
+    fetch(SHEET_CSV_URL)
+      .then(res => res.text())
+      .then(csvText => {
+        const rows = parseCSV(csvText);
+        const headers = rows[0];
+        const data = rows.slice(1).map(row => {
+          return {
+            id: row[0],
+            name: row[1],
+            price: row[2],
+            composition: row[4],
+            photo: row[5]
+          };
+        }).filter(item => item.name);
+        renderCatalog(data);
       })
-      .catch(() => {
-        document.getElementById('list').innerHTML = '<p style="text-align:center;color:#999;">Не удалось загрузить каталог</p>';
+      .catch((err) => {
+        console.error(err);
+        document.getElementById('list').innerHTML = '<p style="text-align:center;color:#999;padding:20px;">Не удалось загрузить каталог</p>';
       });
 
-    function select(id, name, price, photo, composition) {
-      selectedProduct = { id, name, price, photo, composition };
+    function renderCatalog(data) {
+      const carousel = document.getElementById('carousel');
+      const list = document.getElementById('list');
+
+      // В карусель берем первые 4 товара
+      data.slice(0, 4).forEach(p => {
+        const priceNum = parseInt(String(p.price).replace(/\D/g, '')) || 0;
+        const card = document.createElement('div');
+        card.className = 'carousel-card';
+        card.innerHTML = `
+          <img src="${p.photo}" alt="${p.name}" loading="lazy">
+          <div class="info">
+            <h4>${p.name}</h4>
+            <div class="price">${priceNum.toLocaleString()} ₽</div>
+            <button class="btn" style="width:100%; padding:8px;" onclick="selectProduct(${JSON.stringify(p).replace(/"/g, '&quot;')})">Выбрать</button>
+          </div>
+        `;
+        carousel.appendChild(card);
+      });
+
+      // В список кидаем всё
+      data.forEach(p => {
+        const priceNum = parseInt(String(p.price).replace(/\D/g, '')) || 0;
+        const item = document.createElement('div');
+        item.className = 'product';
+        item.innerHTML = `
+          <img src="${p.photo}" alt="${p.name}" loading="lazy">
+          <div class="info">
+            <h3>${p.name}</h3>
+            <div class="desc">${p.composition || 'Красивый букет'}</div>
+            <div class="price">${priceNum.toLocaleString()} ₽</div>
+          </div>
+          <button class="btn" onclick="selectProduct(${JSON.stringify(p).replace(/"/g, '&quot;')})">Выбрать</button>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    function selectProduct(product) {
+      selectedProduct = product;
+      const priceNum = parseInt(String(product.price).replace(/\D/g, '')) || 0;
       document.getElementById('selected-product').innerHTML = `
-        <img src="${photo}" style="width:70px;height:70px;border-radius:10px;object-fit:cover;">
+        <img src="${product.photo}">
         <div>
-          <b>${name}</b>
-          <p style="color:#4CAF50;font-weight:600;">${price.toLocaleString()} ₽</p>
-          <p style="font-size:12px;color:#888;">${composition}</p>
+          <div style="font-weight:700; font-size:16px; margin-bottom:4px;">${product.name}</div>
+          <div style="font-size:13px; color:#757575; margin-bottom:8px;">${product.composition}</div>
+          <div style="color:var(--primary); font-weight:700; font-size:18px;">${priceNum.toLocaleString()} ₽</div>
         </div>
       `;
       document.getElementById('catalog').style.display = 'none';
       document.getElementById('form').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function goBack() {
       document.getElementById('catalog').style.display = 'block';
       document.getElementById('form').style.display = 'none';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function submitOrder() {
@@ -148,7 +340,7 @@
       const time = document.getElementById('time').value;
 
       if (!name || !phone || !address || !date || !time) {
-        tg.showAlert('Пожалуйста, заполните все обязательные поля: имя, телефон, адрес, дату и время доставки.');
+        tg.showAlert('Пожалуйста, заполните все поля со звёздочкой (*)');
         return;
       }
 
@@ -156,23 +348,36 @@
         product_id: selectedProduct.id,
         product_name: selectedProduct.name,
         price: selectedProduct.price,
-        name,
-        phone,
-        email: document.getElementById('email').value.trim(),
-        address,
-        date,
-        time,
-        card: document.getElementById('card').value.trim()
+        name, phone, address, date, time,
+        card: document.getElementById('card').value.trim(),
+        user_id: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : null
       };
-      fetch('https://hook.eu1.make.com/9t3j6wr4a7k2d9k66ciiw49rgwuo9piz', {
+
+      // Блокируем кнопку от двойного нажатия
+      const btn = document.querySelector('.btn-submit');
+      btn.innerText = 'Отправляем...';
+      btn.disabled = true;
+
+      fetch('http://localhost:8080/api/order', { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(order)
-      }).then(() => {
-        tg.showAlert('Заказ оформлен! Курьер свяжется с вами.');
-        tg.close();
-      }).catch(() => {
-        tg.showAlert('Ошибка. Попробуйте позже.');
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          tg.showAlert('🎉 Заказ оформлен! Флорист скоро свяжется с вами.');
+          tg.close();
+        } else {
+          tg.showAlert('Ошибка: ' + data.error);
+          btn.innerText = 'Оформить заказ';
+          btn.disabled = false;
+        }
+      })
+      .catch(() => {
+        tg.showAlert('Ошибка сети. Попробуйте позже.');
+        btn.innerText = 'Оформить заказ';
+        btn.disabled = false;
       });
     }
   </script>
