@@ -49,7 +49,6 @@
 
   <div id="catalog">
     <div class="banner">
-      <!-- Баннер-заглушка, если захочешь, поменяешь на свою -->
       <img src="https://images.unsplash.com/photo-1563241527-3004b7be0ffd?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80" alt="Баннер">
       <div class="banner-overlay"><h1>Свежие цветы</h1><p>Соберем и доставим за 2 часа</p></div>
     </div>
@@ -80,23 +79,40 @@
     tg.expand();
     let selectedProduct = null;
 
-    // СЮДА ВСТАВЬ ССЫЛКУ ИЗ NGROK (например: https://1234-5678.ngrok-free.app)
+    // ССЫЛКА ОТ NGROK (для отправки заказа)
     const BACKEND_URL = "https://your-ngrok-url.ngrok-free.app"; 
     
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/12NFsicWYaYWPCbZpMYIsb7B8m9q_yb9_236hUJClTrE/export?format=csv";
 
-    // 1. ИДЕАЛЬНЫЙ ПАРСЕР CSV (не ломается на запятых)
+    // ===== ИДЕАЛЬНЫЙ ПАРСЕР (понимает запятые внутри кавычек) =====
     function parseCSV(text) {
-      const rows = []; let currentRow = []; let currentCell = ''; let inQuotes = false;
+      const rows = [];
+      let currentRow = [];
+      let currentCell = '';
+      let inQuotes = false;
+      
       for (let i = 0; i < text.length; i++) {
         const char = text[i];
-        if (char === '"') inQuotes = !inQuotes;
-        else if (char === ',' && !inQuotes) { currentRow.push(currentCell.trim()); currentCell = ''; }
-        else if ((char === '\n' || char === '\r') && !inQuotes) {
-          if (currentCell || currentRow.length > 0) { currentRow.push(currentCell.trim()); rows.push(currentRow); currentRow = []; currentCell = ''; }
-        } else currentCell += char;
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          currentRow.push(currentCell.trim());
+          currentCell = '';
+        } else if ((char === '\n' || char === '\r') && !inQuotes) {
+          if (currentCell || currentRow.length > 0) {
+            currentRow.push(currentCell.trim());
+            rows.push(currentRow);
+            currentRow = [];
+            currentCell = '';
+          }
+        } else {
+          currentCell += char;
+        }
       }
-      if (currentCell || currentRow.length > 0) { currentRow.push(currentCell.trim()); rows.push(currentRow); }
+      if (currentCell || currentRow.length > 0) {
+        currentRow.push(currentCell.trim());
+        rows.push(currentRow);
+      }
       return rows;
     }
 
@@ -104,22 +120,35 @@
       .then(res => res.text())
       .then(csvText => {
         const rows = parseCSV(csvText);
-        const data = rows.slice(1).map(row => ({
-          id: row[0], name: row[1], price: row[2], composition: row[4], photo: row[5]
-        })).filter(item => item.name && item.name !== 'Название');
+        // Берем данные начиная со второй строки
+        const data = rows.slice(1).map(row => {
+          return {
+            id: row[0] || "",
+            name: row[1] || "Без названия",
+            price: row[2] || "0",
+            composition: row[4] || "",
+            photo: row[5] || ""
+          };
+        }).filter(item => item.name && item.name !== 'Название'); // Фильтруем мусорные строки
+        
         renderCatalog(data);
+      })
+      .catch((err) => {
+        console.error(err);
+        document.getElementById('list').innerHTML = '<p style="text-align:center;color:#999;padding:20px;">Не удалось загрузить каталог</p>';
       });
 
     function renderCatalog(data) {
       const carousel = document.getElementById('carousel');
       const list = document.getElementById('list');
 
-      // Функция для добавления случайного параметра к ссылке (чтобы сбросить кэш картинок)
+      // Функция для сброса кэша картинок
       const getImgUrl = (url) => {
         if (!url) return 'https://via.placeholder.com/150x150/e8f5e9/0f5132?text=🌸';
         return url + (url.includes('?') ? '&' : '?') + 'v=' + Date.now();
       };
 
+      // 1. Рендер карусели
       data.slice(0, 4).forEach(p => {
         const priceNum = parseInt(String(p.price).replace(/\D/g, '')) || 0;
         const card = document.createElement('div');
@@ -134,6 +163,7 @@
         carousel.appendChild(card);
       });
 
+      // 2. Рендер списка
       data.forEach(p => {
         const priceNum = parseInt(String(p.price).replace(/\D/g, '')) || 0;
         const item = document.createElement('div');
