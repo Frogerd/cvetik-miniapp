@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Цветик — v4.0</title>
+  <title>Цветик — v5.0</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root { --primary: #0f5132; --bg: #fafafa; --card-shadow: 0 8px 24px rgba(0,0,0,0.04); --radius: 20px; }
@@ -15,7 +15,7 @@
     .logo { width: 40px; height: 40px; border-radius: 12px; background: #e8f5e9; display: flex; align-items: center; justify-content: center; font-size: 20px; }
     .brand { font-size: 20px; font-weight: 700; }
     .brand span { display: block; font-size: 12px; color: #757575; font-weight: 400; }
-    .version-badge { background: #4CAF50; color: white; padding: 4px 8px; border-radius: 8px; font-size: 12px; font-weight: bold; }
+    .version-badge { background: #e91e63; color: white; padding: 4px 8px; border-radius: 8px; font-size: 12px; font-weight: bold; }
 
     .banner { margin: 0 16px 24px; border-radius: var(--radius); overflow: hidden; position: relative; box-shadow: var(--card-shadow); }
     .banner img { width: 100%; height: 180px; object-fit: cover; display: block; }
@@ -54,7 +54,7 @@
       <div class="logo">🌸</div>
       <div class="brand">Цветик<span>доставка с любовью</span></div>
     </div>
-    <div class="version-badge">v4.0</div>
+    <div class="version-badge">v5.0</div>
   </div>
 
   <div id="catalog">
@@ -87,57 +87,18 @@
     const tg = window.Telegram.WebApp; tg.ready(); tg.expand();
     let selectedProduct = null;
     
-    // ССЫЛКА ОТ NGROK (для отправки заказа)
     const BACKEND_URL = "https://your-ngrok-url.ngrok-free.app"; 
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/12NFsicWYaYWPCbZpMYIsb7B8m9q_yb9_236hUJClTrE/export?format=csv";
 
-    // ===== ПРАВИЛЬНЫЙ ПАРСЕР CSV (понимает кавычки) =====
+    // ===== ПАРСЕР (просто разбивает по запятым, убирает кавычки) =====
+    // Мы используем самый простой сплит, потому что Google CSV можно легко почистить
     function parseCSV(text) {
-      const rows = [];
-      let currentRow = [];
-      let currentCell = '';
-      let inQuotes = false;
-      
-      for (let i = 0; i < text.length; i++) {
-        const char = text[i];
-        
-        if (char === '"') {
-          // Если это две кавычки подряд (экранирование), добавляем одну
-          if (inQuotes && text[i + 1] === '"') {
-            currentCell += '"';
-            i++; 
-          } else {
-            // Переключаем режим "внутри кавычек"
-            inQuotes = !inQuotes;
-          }
-        } 
-        else if (char === ',' && !inQuotes) {
-          // Запятая вне кавычек = разделитель колонок
-          currentRow.push(currentCell.trim());
-          currentCell = '';
-        } 
-        else if ((char === '\n' || char === '\r') && !inQuotes) {
-          // Перенос строки вне кавычек = конец записи
-          if (currentCell || currentRow.length > 0) {
-            currentRow.push(currentCell.trim());
-            rows.push(currentRow);
-            currentRow = [];
-            currentCell = '';
-          }
-        } 
-        else {
-          // Обычный символ
-          currentCell += char;
-        }
-      }
-      
-      // Добавляем последнюю ячейку, если она осталась
-      if (currentCell || currentRow.length > 0) {
-        currentRow.push(currentCell.trim());
-        rows.push(currentRow);
-      }
-      
-      return rows;
+      return text.split('\n').map(row => {
+        return row.split(',').map(cell => {
+          // Убираем пробелы и двойные кавычки с концов
+          return cell.replace(/^"|"$/g, '').trim(); 
+        });
+      }).filter(row => row.length > 1);
     }
 
     fetch(SHEET_CSV_URL)
@@ -148,14 +109,16 @@
         // Берем данные, пропуская заголовок
         const data = rows.slice(1).map(row => {
           return {
-            id: row[0] || "",
-            name: row[1] || "Без названия",
-            price: row[2] || "0",
-            composition: row[4] || "",
-            photo: row[5] || ""
+            // ВАЖНО: Жестко указываем, какая колонка чем является!
+            name: row[0] || "Без названия",       // Название
+            price: row[1] || "0",                 // Цена
+            composition: row[2] || "",            // Состав
+            description: row[3] || "",            // Описание
+            photo: row[4] || ""                   // Ссылка на картинку
           };
         }).filter(item => item.name && item.name !== 'Название');
         
+        console.log("Обработанные данные:", data); // Выведем в консоль для проверки
         renderCatalog(data);
       })
       .catch((err) => {
@@ -227,7 +190,7 @@
       const time = document.getElementById('time').value;
       if (!name || !phone || !address || !date || !time) { tg.showAlert('Заполните все поля *'); return; }
 
-      const order = { product_id: selectedProduct.id, product_name: selectedProduct.name, price: selectedProduct.price, name, phone, address, date, time, card: document.getElementById('card').value.trim(), user_id: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : null };
+      const order = { product_id: selectedProduct.name, product_name: selectedProduct.name, price: selectedProduct.price, name, phone, address, date, time, card: document.getElementById('card').value.trim(), user_id: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : null };
       const btn = document.querySelector('.btn-submit'); btn.innerText = 'Отправляем...'; btn.disabled = true;
 
       fetch(`${BACKEND_URL}/api/order`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(order) })
