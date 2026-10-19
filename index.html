@@ -12,8 +12,11 @@
     
     .top-nav { padding: 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid #eee; }
     .nav-left { display: flex; align-items: center; gap: 12px; }
-    .logo { width: 40px; height: 40px; border-radius: 12px; background: #e8f5e9; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+    
+    /* Убран фон у логотипа */
+    .logo { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
     .logo img { width: 100%; height: 100%; object-fit: contain; }
+    
     .brand { font-size: 20px; font-weight: 700; }
     .brand span { display: block; font-size: 12px; color: #757575; font-weight: 400; }
 
@@ -58,7 +61,6 @@
   <div class="top-nav">
     <div class="nav-left">
       <div class="logo">
-          <!-- Картинка логотипа из папки img твоего GitHub репозитория -->
           <img src="img/logo.png" onerror="this.style.display='none'">
       </div>
       <div class="brand">Цветик<span>доставка с любовью</span></div>
@@ -67,7 +69,6 @@
 
   <div id="catalog">
     <div class="banner">
-      <!-- Картинка баннера из папки img твоего GitHub репозитория -->
       <img src="img/banner.png" alt="Баннер" onerror="this.src='https://images.unsplash.com/photo-1563241527-3004b7be0ffd?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80'">
       <div class="banner-overlay"><h1>Свежие цветы</h1><p>Соберем и доставим за 2 часа</p></div>
     </div>
@@ -212,10 +213,9 @@
       btn.innerText = 'Оформляем...'; 
       btn.disabled = true;
 
-      // Имитируем задержку отправки (1.5 секунды) и показываем успех
       setTimeout(() => {
         tg.showAlert(`🎉 Спасибо, ${name}!\nВаш заказ на «${selectedProduct.name}» оформлен.\n\n(Это демо-версия, данные не отправлены в CRM)`);
-        tg.close(); // Закрываем мини-апп
+        tg.close();
       }, 1500);
     }
   </script>
