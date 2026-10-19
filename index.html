@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Цветик — v9.0</title>
+  <title>Цветик — v10.0</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root { --primary: #0f5132; --bg: #fafafa; --card-shadow: 0 8px 24px rgba(0,0,0,0.04); --radius: 20px; }
@@ -12,12 +12,13 @@
     
     .top-nav { padding: 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid #eee; }
     .nav-left { display: flex; align-items: center; gap: 12px; }
-    .logo { width: 40px; height: 40px; border-radius: 12px; background: #e8f5e9; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .logo { width: 40px; height: 40px; border-radius: 12px; background: #e8f5e9; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+    .logo img { width: 100%; height: 100%; object-fit: contain; }
     .brand { font-size: 20px; font-weight: 700; }
     .brand span { display: block; font-size: 12px; color: #757575; font-weight: 400; }
     .version-badge { background: #8bc34a; color: white; padding: 4px 8px; border-radius: 8px; font-size: 12px; font-weight: bold; }
 
-    .banner { margin: 0 16px 24px; border-radius: var(--radius); overflow: hidden; position: relative; box-shadow: var(--card-shadow); }
+    .banner { margin: 0 16px 24px; border-radius: var(--radius); overflow: hidden; position: relative; box-shadow: var(--card-shadow); background: #e0e0e0; }
     .banner img { width: 100%; height: 180px; object-fit: cover; display: block; }
     .banner-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); display: flex; flex-direction: column; justify-content: flex-end; padding: 16px; color: white; }
     .section-title { font-size: 18px; font-weight: 700; padding: 0 16px 12px; }
@@ -47,7 +48,6 @@
     .btn-submit { background: var(--primary); color: #fff; border: none; padding: 18px; border-radius: 16px; width: 100%; font-size: 16px; font-weight: 600; margin-top: 8px; }
     .btn-back { background: transparent; color: #757575; border: none; padding: 16px; width: 100%; font-size: 15px; font-weight: 600; cursor: pointer; }
 
-    /* Стили для выбранного товара */
     .selected-info { display: flex; flex-direction: column; gap: 4px; }
     .selected-title { font-weight: 700; font-size: 16px; }
     .selected-comp { font-size: 12px; color: #757575; }
@@ -58,15 +58,19 @@
 <body>
   <div class="top-nav">
     <div class="nav-left">
-      <div class="logo">🌸</div>
+      <div class="logo">
+          <!-- Логотип из папки Image -->
+          <img src="${BACKEND_URL}/img/logo.png" onerror="this.style.display='none'">
+      </div>
       <div class="brand">Цветик<span>доставка с любовью</span></div>
     </div>
-    <div class="version-badge">v9.0</div>
+    <div class="version-badge">v10.0</div>
   </div>
 
   <div id="catalog">
     <div class="banner">
-      <img src="https://images.unsplash.com/photo-1563241527-3004b7be0ffd?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80" alt="Баннер">
+      <!-- Баннер из папки Image -->
+      <img src="${BACKEND_URL}/img/banner.png" alt="Баннер" onerror="this.src='https://images.unsplash.com/photo-1563241527-3004b7be0ffd?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80'">
       <div class="banner-overlay"><h1>Свежие цветы</h1><p>Соберем и доставим за 2 часа</p></div>
     </div>
     <h2 class="section-title">✨ Хиты продаж</h2>
@@ -78,14 +82,10 @@
   <div id="form">
     <h2 class="section-title" style="padding-left:0; margin-bottom:16px;">Оформление</h2>
     
-    <!-- Блок выбранного товара -->
     <div id="selected-product" style="background:#fff; border-radius:20px; padding:16px; margin-bottom:24px; display:flex; gap:16px; align-items:center; box-shadow:var(--card-shadow);"></div>
     
     <div class="form-group"><label>Ваше имя *</label><input id="name" placeholder="Как к вам обращаться?" required></div>
-    
-    <!-- Измененный плейсхолдер телефона -->
     <div class="form-group"><label>Телефон *</label><input id="phone" type="tel" placeholder="+7 (999) ***-**-**" required></div>
-    
     <div class="form-group"><label>Адрес доставки *</label><input id="address" placeholder="Улица, дом, квартира" required></div>
     <div style="display:flex; gap:12px;">
       <div class="form-group" style="flex:1;"><label>Дата *</label><input id="date" type="date" required></div>
@@ -97,10 +97,12 @@
   </div>
 
   <script>
+    // ВАЖНО: Скрипт должен знать, где твой сервер, ДО загрузки картинок!
+    const BACKEND_URL = "https://your-ngrok-url.ngrok-free.app"; 
+
     const tg = window.Telegram.WebApp; tg.ready(); tg.expand();
     let selectedProduct = null;
     
-    const BACKEND_URL = "https://your-ngrok-url.ngrok-free.app"; 
     const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/12NFsicWYaYWPCbZpMYIsb7B8m9q_yb9_236hUJClTrE/export?format=csv";
 
     function parseCSV(text) {
@@ -111,7 +113,6 @@
       
       for (let i = 0; i < text.length; i++) {
         const char = text[i];
-        
         if (char === '"') {
           if (inQuotes && text[i + 1] === '"') { currentCell += '"'; i++; } 
           else { inQuotes = !inQuotes; }
@@ -145,7 +146,6 @@
         renderCatalog(products);
       })
       .catch((err) => {
-        console.error(err);
         document.getElementById('list').innerHTML = '<p style="text-align:center;color:#999;padding:20px;">Не удалось загрузить каталог</p>';
       });
 
@@ -192,7 +192,6 @@
       selectedProduct = product;
       const priceNum = parseInt(String(product.price).replace(/\D/g, '')) || 0;
       
-      // Выводим картинку, название, состав, ОПИСАНИЕ и цену
       document.getElementById('selected-product').innerHTML = `
         <div class="img-wrapper" style="width:90px; height:90px; border-radius:16px; flex-shrink:0; overflow:hidden;">
             <img src="${product.photo}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='https://via.placeholder.com/80x80/e8f5e9/0f5132?text=🌸'">
