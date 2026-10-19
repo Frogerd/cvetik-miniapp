@@ -3,21 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Цветик</title>
+  <title>Цветик — v2.0</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    /* ... (оставь свои стили, они хорошие) ... */
     :root { --primary: #0f5132; --bg: #fafafa; --card-shadow: 0 8px 24px rgba(0,0,0,0.04); --radius: 20px; }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); padding-bottom: 40px; color: #1a1a1a; }
-    .top-nav { padding: 16px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 10; background: var(--bg); }
+    
+    /* Шапка с версией */
+    .top-nav { padding: 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid #eee; }
+    .nav-left { display: flex; align-items: center; gap: 12px; }
     .logo { width: 40px; height: 40px; border-radius: 12px; background: #e8f5e9; display: flex; align-items: center; justify-content: center; font-size: 20px; }
     .brand { font-size: 20px; font-weight: 700; }
     .brand span { display: block; font-size: 12px; color: #757575; font-weight: 400; }
+    .version-badge { background: #e91e63; color: white; padding: 4px 8px; border-radius: 8px; font-size: 12px; font-weight: bold; }
+
+    /* Отладочный блок */
+    .debug { background: #fff3cd; color: #856404; padding: 10px; font-size: 11px; margin: 10px 16px; border-radius: 8px; display: none; word-break: break-all; }
+
     .banner { margin: 0 16px 24px; border-radius: var(--radius); overflow: hidden; position: relative; box-shadow: var(--card-shadow); }
     .banner img { width: 100%; height: 180px; object-fit: cover; display: block; }
     .banner-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); display: flex; flex-direction: column; justify-content: flex-end; padding: 16px; color: white; }
     .section-title { font-size: 18px; font-weight: 700; padding: 0 16px 12px; }
+    
     .carousel-wrap { overflow-x: auto; padding: 0 16px 16px; display: flex; gap: 12px; scrollbar-width: none; }
     .carousel-card { flex: 0 0 160px; background: #fff; border-radius: var(--radius); overflow: hidden; box-shadow: var(--card-shadow); display: flex; flex-direction: column; }
     .img-wrapper { width: 100%; height: 140px; background: #f0f0f0; }
@@ -25,6 +33,7 @@
     .carousel-card .info { padding: 12px; flex: 1; display: flex; flex-direction: column; }
     .carousel-card h4 { font-size: 14px; margin-bottom: 4px; }
     .carousel-card .price { font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+    
     .catalog { display: flex; flex-direction: column; gap: 16px; padding: 0 16px; }
     .product { background: #fff; border-radius: var(--radius); padding: 12px; box-shadow: var(--card-shadow); display: flex; gap: 16px; align-items: center; }
     .product .img-wrapper { width: 90px; height: 90px; border-radius: 16px; flex-shrink: 0; overflow: hidden; }
@@ -33,6 +42,7 @@
     .product .desc { font-size: 12px; color: #757575; margin-bottom: 8px; }
     .product .price { font-size: 16px; font-weight: 700; color: var(--primary); }
     .btn { background: var(--primary); color: #fff; border: none; padding: 10px 16px; border-radius: 12px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(15, 81, 50, 0.2); }
+    
     #form { padding: 0 16px; display: none; }
     .form-group { margin-bottom: 16px; }
     .form-group label { display: block; font-size: 13px; font-weight: 600; color: #757575; margin-bottom: 6px; }
@@ -43,12 +53,26 @@
   </style>
 </head>
 <body>
-  <div class="top-nav"><div class="logo">🌸</div><div class="brand">Цветик<span>доставка с любовью</span></div></div>
-  
+  <div class="top-nav">
+    <div class="nav-left">
+      <div class="logo">🌸</div>
+      <div class="brand">Цветик<span>доставка с любовью</span></div>
+    </div>
+    <div class="version-badge">v2.0</div>
+  </div>
+
+  <!-- Блок для отладки (покажет, что пришло от бота) -->
+  <div id="debug-box" class="debug"></div>
+
   <div id="catalog">
-    <div class="banner"><img src="https://images.unsplash.com/photo-1563241527-3004b7be0ffd?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80"><div class="banner-overlay"><h1>Свежие цветы</h1><p>Соберем и доставим за 2 часа</p></div></div>
-    <h2 class="section-title">✨ Хиты продаж</h2><div class="carousel-wrap" id="carousel"></div>
-    <h2 class="section-title">🌷 Весь каталог</h2><div class="catalog" id="list"></div>
+    <div class="banner">
+      <img src="https://images.unsplash.com/photo-1563241527-3004b7be0ffd?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80" alt="Баннер">
+      <div class="banner-overlay"><h1>Свежие цветы</h1><p>Соберем и доставим за 2 часа</p></div>
+    </div>
+    <h2 class="section-title">✨ Хиты продаж</h2>
+    <div class="carousel-wrap" id="carousel"></div>
+    <h2 class="section-title">🌷 Весь каталог</h2>
+    <div class="catalog" id="list"></div>
   </div>
 
   <div id="form">
@@ -57,25 +81,48 @@
     <div class="form-group"><label>Ваше имя *</label><input id="name" placeholder="Как к вам обращаться?" required></div>
     <div class="form-group"><label>Телефон *</label><input id="phone" type="tel" placeholder="+7 (999) 123-45-67" required></div>
     <div class="form-group"><label>Адрес доставки *</label><input id="address" placeholder="Улица, дом, квартира" required></div>
-    <div style="display:flex; gap:12px;"><div class="form-group" style="flex:1;"><label>Дата *</label><input id="date" type="date" required></div><div class="form-group" style="flex:1;"><label>Время *</label><input id="time" type="time" required></div></div>
+    <div style="display:flex; gap:12px;">
+      <div class="form-group" style="flex:1;"><label>Дата *</label><input id="date" type="date" required></div>
+      <div class="form-group" style="flex:1;"><label>Время *</label><input id="time" type="time" required></div>
+    </div>
     <div class="form-group"><label>Текст открытки</label><textarea id="card" placeholder="Что написать?"></textarea></div>
-    <button class="btn-submit" onclick="submitOrder()">Оформить заказ</button><button class="btn-back" onclick="goBack()">← Назад</button>
+    <button class="btn-submit" onclick="submitOrder()">Оформить заказ</button>
+    <button class="btn-back" onclick="goBack()">← Назад</button>
   </div>
 
   <script>
     const tg = window.Telegram.WebApp; tg.ready(); tg.expand();
     let selectedProduct = null;
-    // ВСТАВЬ СЮДА ССЫЛКУ ОТ NGROK
+    
+    // ТВОЙ URL ОТ NGROK
     const BACKEND_URL = "https://your-ngrok-url.ngrok-free.app"; 
+    const debugBox = document.getElementById('debug-box');
 
-    // ЗАПРАШИВАЕМ ДАННЫЕ У БОТА (а не парсим CSV)
+    // Выводим инфу на экран
+    function showDebug(msg) {
+      debugBox.style.display = 'block';
+      debugBox.innerHTML += msg + '<br>';
+    }
+
+    showDebug(`Сайт загружен. Стучимся в: ${BACKEND_URL}`);
+
+    // ЗАПРАШИВАЕМ ДАННЫЕ У БОТА
     fetch(`${BACKEND_URL}/api/products`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then(data => {
+        showDebug(`Получено товаров: ${data.length}. Первый: ${data[0]?.name}`);
+        
+        // Показываем отладку только если данные есть
+        if(data.length > 0) {
+            debugBox.style.display = 'none';
+        }
+
         const carousel = document.getElementById('carousel');
         const list = document.getElementById('list');
 
-        // Функция для сброса кэша картинок
         const getImgUrl = (url) => {
             if (!url) return 'https://via.placeholder.com/150x150/e8f5e9/0f5132?text=🌸';
             return url + (url.includes('?') ? '&' : '?') + 'v=' + Date.now();
@@ -107,6 +154,9 @@
             <button class="btn" onclick='selectProduct(${JSON.stringify(p)})'>Выбрать</button>`;
           list.appendChild(item);
         });
+      })
+      .catch(err => {
+        showDebug(`ОШИБКА: ${err.message}. Проверь, запущен ли бот и ngrok.`);
       });
 
     function selectProduct(product) {
