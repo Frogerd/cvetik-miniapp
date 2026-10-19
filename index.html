@@ -12,11 +12,8 @@
     
     .top-nav { padding: 16px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; background: var(--bg); border-bottom: 1px solid #eee; }
     .nav-left { display: flex; align-items: center; gap: 12px; }
-    
-    /* Убран фон у логотипа */
     .logo { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
     .logo img { width: 100%; height: 100%; object-fit: contain; }
-    
     .brand { font-size: 20px; font-weight: 700; }
     .brand span { display: block; font-size: 12px; color: #757575; font-weight: 400; }
 
@@ -25,12 +22,21 @@
     .banner-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); display: flex; flex-direction: column; justify-content: flex-end; padding: 16px; color: white; }
     .section-title { font-size: 18px; font-weight: 700; padding: 0 16px 12px; }
     
-    .carousel-wrap { overflow-x: auto; padding: 0 16px 16px; display: flex; gap: 12px; scrollbar-width: none; }
+    /* --- БЕГУЩАЯ СТРОКА ДЛЯ КАРУСЕЛИ --- */
+    .carousel-wrap { overflow: hidden; padding: 0 16px 16px; position: relative; }
+    .carousel { display: flex; gap: 12px; animation: scroll 20s linear infinite; width: max-content; }
+    .carousel-wrap:hover .carousel, .carousel-wrap:active .carousel { animation-play-state: paused; }
+    
+    @keyframes scroll { 
+      0% { transform: translateX(0); } 
+      100% { transform: translateX(-50%); } 
+    }
+
     .carousel-card { flex: 0 0 160px; background: #fff; border-radius: var(--radius); overflow: hidden; box-shadow: var(--card-shadow); display: flex; flex-direction: column; }
     .img-wrapper { width: 100%; height: 140px; background: #f0f0f0; }
     .img-wrapper img { width: 100%; height: 100%; object-fit: cover; }
     .carousel-card .info { padding: 12px; flex: 1; display: flex; flex-direction: column; }
-    .carousel-card h4 { font-size: 14px; margin-bottom: 4px; }
+    .carousel-card h4 { font-size: 14px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .carousel-card .price { font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
     
     .catalog { display: flex; flex-direction: column; gap: 16px; padding: 0 16px; }
@@ -55,43 +61,71 @@
     .selected-comp { font-size: 12px; color: #757575; }
     .selected-desc { font-size: 12px; color: #888; font-style: italic; margin-top: 4px; line-height: 1.3; }
     .selected-price { color: var(--primary); font-weight: 700; font-size: 18px; margin-top: 4px; }
+
+    /* --- ЭКРАН УСПЕХА --- */
+    #success-screen { 
+      display: none; padding: 40px 24px; text-align: center; 
+      height: 100vh; box-sizing: border-box; flex-direction: column; justify-content: center; align-items: center;
+    }
+    .success-icon { 
+      font-size: 64px; background: #e8f5e9; color: var(--primary); width: 120px; height: 120px; 
+      border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+      margin-bottom: 24px; box-shadow: 0 10px 30px rgba(15, 81, 50, 0.15);
+      animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    .success-title { font-size: 24px; font-weight: 700; margin-bottom: 12px; color: var(--primary); }
+    .success-text { font-size: 15px; color: #757575; line-height: 1.5; margin-bottom: 32px; }
+    .btn-close { background: var(--primary); color: #fff; border: none; padding: 18px; border-radius: 16px; width: 100%; font-size: 16px; font-weight: 600; cursor: pointer; max-width: 300px; }
   </style>
 </head>
 <body>
-  <div class="top-nav">
-    <div class="nav-left">
-      <div class="logo">
-          <img src="img/logo.png" onerror="this.style.display='none'">
-      </div>
-      <div class="brand">Цветик<span>доставка с любовью</span></div>
-    </div>
-  </div>
-
+  <!-- ОСНОВНОЙ КАТАЛОГ -->
   <div id="catalog">
+    <div class="top-nav">
+      <div class="nav-left">
+        <div class="logo"><img src="img/logo.png" onerror="this.style.display='none'"></div>
+        <div class="brand">Цветик<span>доставка с любовью</span></div>
+      </div>
+    </div>
+
     <div class="banner">
       <img src="img/banner.png" alt="Баннер" onerror="this.src='https://images.unsplash.com/photo-1563241527-3004b7be0ffd?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80'">
       <div class="banner-overlay"><h1>Свежие цветы</h1><p>Соберем и доставим за 2 часа</p></div>
     </div>
     <h2 class="section-title">✨ Хиты продаж</h2>
-    <div class="carousel-wrap" id="carousel"></div>
+    <div class="carousel-wrap">
+      <div class="carousel" id="carousel"></div>
+    </div>
     <h2 class="section-title">🌷 Весь каталог</h2>
     <div class="catalog" id="list"></div>
   </div>
 
+  <!-- ФОРМА ОФОРМЛЕНИЯ -->
   <div id="form">
-    <h2 class="section-title" style="padding-left:0; margin-bottom:16px;">Оформление</h2>
-    <div id="selected-product" style="background:#fff; border-radius:20px; padding:16px; margin-bottom:24px; display:flex; gap:16px; align-items:center; box-shadow:var(--card-shadow);"></div>
+    <h2 class="section-title" style="padding-left:16px; margin-top:16px; margin-bottom:16px;">Оформление</h2>
+    <div id="selected-product" style="background:#fff; border-radius:20px; padding:16px; margin:0 16px 24px; display:flex; gap:16px; align-items:center; box-shadow:var(--card-shadow);"></div>
     
-    <div class="form-group"><label>Ваше имя *</label><input id="name" placeholder="Как к вам обращаться?" required></div>
-    <div class="form-group"><label>Телефон *</label><input id="phone" type="tel" placeholder="+7 (999) ***-**-**" required></div>
-    <div class="form-group"><label>Адрес доставки *</label><input id="address" placeholder="Улица, дом, квартира" required></div>
-    <div style="display:flex; gap:12px;">
-      <div class="form-group" style="flex:1;"><label>Дата *</label><input id="date" type="date" required></div>
-      <div class="form-group" style="flex:1;"><label>Время *</label><input id="time" type="time" required></div>
+    <div style="padding: 0 16px;">
+      <div class="form-group"><label>Ваше имя *</label><input id="name" placeholder="Как к вам обращаться?" required></div>
+      <div class="form-group"><label>Телефон *</label><input id="phone" type="tel" placeholder="+7 (999) ***-**-**" required></div>
+      <div class="form-group"><label>Адрес доставки *</label><input id="address" placeholder="Улица, дом, квартира" required></div>
+      <div style="display:flex; gap:12px;">
+        <div class="form-group" style="flex:1;"><label>Дата *</label><input id="date" type="date" required></div>
+        <div class="form-group" style="flex:1;"><label>Время *</label><input id="time" type="time" required></div>
+      </div>
+      <div class="form-group"><label>Текст открытки</label><textarea id="card" placeholder="Что написать?"></textarea></div>
+      <button class="btn-submit" onclick="submitOrder()">Оформить заказ</button>
+      <button class="btn-back" onclick="goBack()">← Назад</button>
     </div>
-    <div class="form-group"><label>Текст открытки</label><textarea id="card" placeholder="Что написать?"></textarea></div>
-    <button class="btn-submit" onclick="submitOrder()">Оформить заказ</button>
-    <button class="btn-back" onclick="goBack()">← Назад</button>
+  </div>
+
+  <!-- ЭКРАН УСПЕХА -->
+  <div id="success-screen">
+    <div class="success-icon">✓</div>
+    <div class="success-title">Заказ оформлен!</div>
+    <div class="success-text" id="success-text"></div>
+    <button class="btn-close" onclick="tg.close()">Вернуться в Telegram</button>
   </div>
 
   <script>
@@ -144,7 +178,9 @@
         return url + (url.includes('?') ? '&' : '?') + 'v=' + Date.now();
       };
 
-      products.slice(0, 4).forEach(p => {
+      // 1. Рендер бегущей строки (дублируем товары для бесконечности)
+      const carouselProducts = [...products.slice(0, 4), ...products.slice(0, 4)]; 
+      carouselProducts.forEach(p => {
         const priceNum = parseInt(String(p.price).replace(/\D/g, '')) || 0;
         const card = document.createElement('div');
         card.className = 'carousel-card';
@@ -158,6 +194,7 @@
         carousel.appendChild(card);
       });
 
+      // 2. Рендер обычного каталога
       products.forEach(p => {
         const priceNum = parseInt(String(p.price).replace(/\D/g, '')) || 0;
         const item = document.createElement('div');
@@ -194,9 +231,13 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function goBack() { document.getElementById('catalog').style.display = 'block'; document.getElementById('form').style.display = 'none'; window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function goBack() { 
+      document.getElementById('form').style.display = 'none'; 
+      document.getElementById('catalog').style.display = 'block'; 
+      window.scrollTo({ top: 0, behavior: 'smooth' }); 
+    }
 
-    // ИМИТАЦИЯ ОФОРМЛЕНИЯ ЗАКАЗА
+    // КРАСИВОЕ ОФОРМЛЕНИЕ ЗАКАЗА (ИМИТАЦИЯ)
     function submitOrder() {
       const name = document.getElementById('name').value.trim();
       const phone = document.getElementById('phone').value.trim();
@@ -213,10 +254,20 @@
       btn.innerText = 'Оформляем...'; 
       btn.disabled = true;
 
+      // Имитируем задержку отправки
       setTimeout(() => {
-        tg.showAlert(`🎉 Спасибо, ${name}!\nВаш заказ на «${selectedProduct.name}» оформлен.\n\n(Это демо-версия, данные не отправлены в CRM)`);
-        tg.close();
-      }, 1500);
+        // Скрываем форму, показываем красивый экран успеха
+        document.getElementById('form').style.display = 'none';
+        
+        const successScreen = document.getElementById('success-screen');
+        successScreen.style.display = 'flex';
+        
+        document.getElementById('success-text').innerHTML = `
+          Спасибо, <b>${name}</b>!<br><br>
+          Вы выбрали «<b>${selectedProduct.name}</b>» на сумму <b>${selectedProduct.price}</b>.<br>
+          Доставим по адресу: ${address} <br>в ${date} к ${time}.
+        `;
+      }, 1000);
     }
   </script>
 </body>
